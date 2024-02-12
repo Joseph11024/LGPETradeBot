@@ -12,10 +12,12 @@ namespace SysBot.Pokemon.Discord
 {
     public static class ReusableActions 
     {
-       
+     
+
+
         public static async Task RepostPKMAsShowdownAsync(this ISocketMessageChannel channel, IAttachment att)
         {
-            if (!PKX.IsPKM(att.Size))
+            if (!EntityDetection.IsSizePlausible(att.Size))
                 return;
             var result = await NetUtil.DownloadPKMAsync(att).ConfigureAwait(false);
             if (!result.Success)

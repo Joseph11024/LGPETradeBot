@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using PKHeX.Core;
@@ -22,8 +23,9 @@ namespace SysBot.Pokemon.Discord
 
     public sealed class SysCord
     {
+       
         public static DiscordSocketClient _client;
-        public readonly PokeTradeHub<PK8> Hub;
+        public  PokeTradeHub<PK8> Hub;
 
         // Keep the CommandService and DI container around for use with commands.
         // These two types require you install the Discord.Net.Commands package.
@@ -57,7 +59,7 @@ namespace SysBot.Pokemon.Discord
 
                 // This makes commands get run on the task thread pool instead on the websocket read thread.
                 // This ensures long running logic can't block the websocket connection.
-                DefaultRunMode = Hub.Config.Discord.AsyncCommands ? RunMode.Async : RunMode.Sync,
+               // DefaultRunMode = Hub.Config.Discord.AsyncCommands ? Discord.Commands.RunMode.Async : Discord.Commands.RunMode.Sync,
 
                 // There's a few more properties you can set,
                 // for example, case-insensitive commands.
@@ -67,7 +69,7 @@ namespace SysBot.Pokemon.Discord
             // Subscribe the logging handler to both the client and the CommandService.
             _client.Log += Log;
             _commands.Log += Log;
-
+            
             // Setup your DI container.
             _services = ConfigureServices();
         }
@@ -114,9 +116,11 @@ namespace SysBot.Pokemon.Discord
 
         public async Task MainAsync(string apiToken, CancellationToken token)
         {
+            
+            _client.Ready += ready;
             // Centralize the logic for commands into a separate method.
             await InitCommands().ConfigureAwait(false);
-
+           
             // Login and connect.
             await _client.LoginAsync(TokenType.Bot, apiToken).ConfigureAwait(false);
             await _client.StartAsync().ConfigureAwait(false);
@@ -150,8 +154,47 @@ namespace SysBot.Pokemon.Discord
 
             // Subscribe a handler to see if a message invokes a command.
             _client.MessageReceived += HandleMessageAsync;
+         
         }
+        public async Task handlebuttonpress(SocketMessageComponent arg)
+        {
 
+            if (arg.Data.CustomId == "wtpyes")
+            {
+                WTPSB.buttonpressed = true;
+                WTPSB.tradepokemon = true;
+                await arg.Message.DeleteAsync();
+                return;
+            }
+            if (arg.Data.CustomId == "wtpno")
+            {
+                WTPSB.buttonpressed = true;
+                WTPSB.tradepokemon = false;
+                await arg.Message.DeleteAsync();
+                return;
+            }
+        }
+        private async Task ready()
+        {
+            var _interactionService = new InteractionService(_client);
+            await _interactionService.AddModulesAsync(Assembly.GetExecutingAssembly(), _services);
+            await _interactionService.RegisterCommandsToGuildAsync(872587205787394119);
+            _client.InteractionCreated += async interaction =>
+            {
+
+                var ctx = new SocketInteractionContext(_client, interaction);
+                var result = await _interactionService.ExecuteCommandAsync(ctx, null);
+            };
+            _client.SlashCommandExecuted += slashtask;
+            _client.ButtonExecuted += handlebuttonpress;
+        }
+        public Task slashtask(SocketSlashCommand arg1)
+        {
+
+           
+            return Task.CompletedTask;
+
+        }
         private async Task HandleMessageAsync(SocketMessage arg)
         {
             // Bail out if it's a System Message.

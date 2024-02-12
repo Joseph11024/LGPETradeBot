@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Discord;
+using System.Threading.Tasks;
 
 namespace SysBot.Pokemon.WinForms
 {
@@ -76,7 +77,7 @@ namespace SysBot.Pokemon.WinForms
 
         private DateTime LastUpdateStatus = DateTime.Now;
 
-        public void ReloadStatus(BotSource<PokeBotState> b)
+        public async void ReloadStatus(BotSource<PokeBotState> b)
         {
             ReloadStatus();
             var bot = b.Bot;
@@ -86,6 +87,36 @@ namespace SysBot.Pokemon.WinForms
             var lastTime = bot.LastTime;
             if (!b.IsRunning)
             {
+                if (Discord.TradeModule.Hub.Config.TradeBot.channelchanger)
+                {
+                    var chanarray = Discord.TradeModule.Hub.Config.TradeBot.tradebotchannel.Split(',');
+                    foreach (string c in chanarray)
+                    {
+                        ulong.TryParse(c, out var tchan);
+                        var tradechan = (ITextChannel)Discord.SysCord._client.GetChannel(tchan);
+                        if (tradechan.Name.Contains("✅"))
+                        {
+                            var role = tradechan.Guild.EveryoneRole;
+                            await tradechan.AddPermissionOverwriteAsync(role, new OverwritePermissions(sendMessages: PermValue.Deny));
+                            await tradechan.ModifyAsync(prop => prop.Name = $"{Discord.TradeModule.Hub.Config.TradeBot.channelname}❌");
+                            var offembed = new EmbedBuilder();
+                            offembed.AddField($"{Discord.SysCord._client.CurrentUser.Username} Bot Announcement", "LGPE Trade Bot is Offline");
+                            await tradechan.SendMessageAsync(embed: offembed.Build());
+                        }
+                        var cah = (ITextChannel)Discord.SysCord._client.GetChannelAsync(Discord.TradeModule.Hub.Config.Discord.wtpchannelid).Result;
+                        if (cah.Name.Contains("✅"))
+                        {
+                            LetsGoTrades.wtpsource.Cancel();
+
+                            await cah.SendMessageAsync("\"Who's That Pokemon\" mode stopped.");
+
+                            await cah.ModifyAsync(newname => newname.Name = cah.Name.Replace("✅", "❌"));
+                            await cah.AddPermissionOverwriteAsync(cah.Guild.EveryoneRole, new OverwritePermissions(sendMessages: PermValue.Deny));
+                        }
+                    }
+                }
+
+
                 PB_Lamp.BackColor = System.Drawing.Color.Transparent;
                 return;
             }
@@ -178,7 +209,7 @@ namespace SysBot.Pokemon.WinForms
                         {
                             ulong.TryParse(i, out var tchan);
                             var tradechan = (ITextChannel)Discord.SysCord._client.GetChannel(tchan);
-                            if (tradechan.Name != $"{Discord.TradeModule.Hub.Config.TradeBot.channelname}✅")
+                            if (tradechan.Name.Contains("❌"))
                             {
                                 var role = tradechan.Guild.EveryoneRole;
                                 await tradechan.AddPermissionOverwriteAsync(role, new OverwritePermissions(sendMessages: PermValue.Allow));
@@ -188,6 +219,8 @@ namespace SysBot.Pokemon.WinForms
                                 await tradechan.SendMessageAsync("<@&898901020678176839>",embed: offembed.Build());
                             }
                         }
+                        if (Discord.TradeModule.Hub.Config.Discord.wtpbool)
+                            Discord.WTPSB.WhoseThatPokemon();
                     }
                 }
                 if (cmd == BotControlCommand.Stop)
@@ -197,7 +230,7 @@ namespace SysBot.Pokemon.WinForms
                     {
                         ulong.TryParse(b, out var tchan);
                         var tradechan = (ITextChannel)Discord.SysCord._client.GetChannel(tchan);
-                        if (tradechan.Name != $"{Discord.TradeModule.Hub.Config.TradeBot.channelname}❌")
+                        if (tradechan.Name.Contains("✅"))
                         {
                             var role = tradechan.Guild.EveryoneRole;
                             await tradechan.AddPermissionOverwriteAsync(role, new OverwritePermissions(sendMessages: PermValue.Deny));

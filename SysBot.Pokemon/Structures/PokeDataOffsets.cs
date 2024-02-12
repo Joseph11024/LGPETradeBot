@@ -33,6 +33,9 @@ namespace SysBot.Pokemon
         public const uint EGeneratingFunction6 = 0x739944; //main
         public const uint EGeneratingFunction7 = 0x739948; //main
         public const uint TrainerData = 0x53582030; //heap
+        public const uint TradePartnerData = 0x41A28240;//heap
+        public const uint TradePartnerData2 = 0x41A28078;//heap
+        public const uint OfferedPokemon = 0x41A22858;//heap
         public const uint BoxSlot1 = 0x533675B0; //heap
         public const uint Money = 0x53324108; //heap
         public const uint NatureTellerEnabled = 0x53405CF8; //heap, 0 random nature, 4 set nature
@@ -53,6 +56,7 @@ namespace SysBot.Pokemon
         public static uint waitingtotradescreen = 0x0080;
         public static uint waitingtotradescreen2 = 0x1080;
         public static uint overworld = 0x78;
+        public static uint scrollscreen = 0xB080;
         //Lets Go Pointers:
         public const string SpeciesComboPointer = "[[[[main+160E410]+50]+770]+40]+298";
         public const string CatchComboPointer = "[[[[main+160E410]+50]+840]+20]+1D0";
